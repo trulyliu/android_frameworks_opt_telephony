@@ -80,6 +80,7 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
     protected Object
     responseIccCardStatus(Parcel p) {
         IccCardApplicationStatus appStatus;
+
         IccCardStatus cardStatus = new IccCardStatus();
         cardStatus.setCardState(p.readInt());
         cardStatus.setUniversalPinState(p.readInt());
@@ -94,10 +95,7 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
             numApplications = IccCardStatus.CARD_MAX_APPS;
         }
         cardStatus.mApplications = new IccCardApplicationStatus[numApplications];
-        if (numApplications==1 && !isGSM){
-            cardStatus.mApplications = new IccCardApplicationStatus[numApplications+2];
-        }
-        appStatus = new IccCardApplicationStatus();
+
         for (int i = 0 ; i < numApplications ; i++) {
             appStatus = new IccCardApplicationStatus();
             appStatus.app_type       = appStatus.AppTypeFromRILInt(p.readInt());
@@ -114,30 +112,6 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
             p.readInt(); // remaining_count_puk2 - puk2_num_retries
             p.readInt(); // - perso_unblock_retries
             cardStatus.mApplications[i] = appStatus;
-        }
-        if (numApplications==1 && !isGSM) {
-            cardStatus.mCdmaSubscriptionAppIndex = 1;
-            cardStatus.mImsSubscriptionAppIndex = 2;
-            IccCardApplicationStatus appStatus2 = new IccCardApplicationStatus();
-            appStatus2.app_type       = appStatus2.AppTypeFromRILInt(3); // ruim state
-            appStatus2.app_state      = appStatus.app_state;
-            appStatus2.perso_substate = appStatus.perso_substate;
-            appStatus2.aid            = appStatus.aid;
-            appStatus2.app_label      = appStatus.app_label;
-            appStatus2.pin1_replaced  = appStatus.pin1_replaced;
-            appStatus2.pin1           = appStatus.pin1;
-            appStatus2.pin2           = appStatus.pin2;
-            cardStatus.mApplications[cardStatus.mCdmaSubscriptionAppIndex] = appStatus2;
-            IccCardApplicationStatus appStatus3 = new IccCardApplicationStatus();
-            appStatus3.app_type       = appStatus3.AppTypeFromRILInt(5); // ims state
-            appStatus3.app_state      = appStatus.app_state;
-            appStatus3.perso_substate = appStatus.perso_substate;
-            appStatus3.aid            = appStatus.aid;
-            appStatus3.app_label      = appStatus.app_label;
-            appStatus3.pin1_replaced  = appStatus.pin1_replaced;
-            appStatus3.pin1           = appStatus.pin1;
-            appStatus3.pin2           = appStatus.pin2;
-            cardStatus.mApplications[cardStatus.mImsSubscriptionAppIndex] = appStatus3;
         }
         return cardStatus;
     }
@@ -164,7 +138,7 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
             long timeoutTime  = SystemClock.elapsedRealtime() + SEND_SMS_TIMEOUT_IN_MS;
             long waitTimeLeft = SEND_SMS_TIMEOUT_IN_MS;
             while (mIsSendingSMS && (waitTimeLeft > 0)) {
-                Rlog.d(LOG_TAG, "sendSMS() waiting for response of previous SEND_SMS");
+                Rlog.d(RILJ_LOG_TAG, "sendSMS() waiting for response of previous SEND_SMS");
                 try {
                     mSMSLock.wait(waitTimeLeft);
                 } catch (InterruptedException ex) {
@@ -173,7 +147,7 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
                 waitTimeLeft = timeoutTime - SystemClock.elapsedRealtime();
             }
             if (waitTimeLeft <= 0) {
-                Rlog.e(LOG_TAG, "sendSms() timed out waiting for response of previous CDMA_SEND_SMS");
+                Rlog.e(RILJ_LOG_TAG, "sendSms() timed out waiting for response of previous CDMA_SEND_SMS");
             }
             mIsSendingSMS = true;
         }
@@ -233,7 +207,7 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
             case 4:
                 // When SIM is PIN-unlocked, RIL doesn't respond with RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED.
                 // We notify the system here.
-                Rlog.d(LOG_TAG, "SIM is PIN-unlocked now");
+                Rlog.d(RILJ_LOG_TAG, "SIM is PIN-unlocked now");
                 if (mIccStatusChangedRegistrants != null) {
                     mIccStatusChangedRegistrants.notifyRegistrants();
                 }
@@ -291,13 +265,13 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
             case SamsungExynos4RIL.RIL_UNSOL_AM:
                 ret = responseString(p);
                 String amString = (String) ret;
-                Rlog.d(LOG_TAG, "Executing AM: " + amString);
+                Rlog.d(RILJ_LOG_TAG, "Executing AM: " + amString);
 
                 try {
                     Runtime.getRuntime().exec("am " + amString);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Rlog.e(LOG_TAG, "am " + amString + " could not be executed.");
+                    Rlog.e(RILJ_LOG_TAG, "am " + amString + " could not be executed.");
                 }
                 break;
             case SamsungExynos4RIL.RIL_UNSOL_RESPONSE_HANDOVER:
@@ -551,22 +525,23 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
     operatorCheck(Parcel p) {
         String response[] = (String[])responseStrings(p);
         for(int i=0; i<response.length; i++){
-            if (response[i]!= null&&i<2){
-                if (response[i].equals("       Empty") || (response[i].equals("") && !isGSM)) {
-                    response[i]=operator;
-                } else if (!response[i].equals(""))  {
-                    try {
-                        Integer.parseInt(response[i]);
-                        response[i]=Operators.operatorReplace(response[i]);
-                        //optimize
-                        if(i==0)
-                            response[i+1]=response[i];
-                    }  catch(NumberFormatException E){
-                        // do nothing
+            if (response[i]!= null){
+                if (i<2){
+                    if (response[i].equals("       Empty") || (response[i].equals("") && !isGSM)) {
+                        response[i]=operator;
+                    } else if (!response[i].equals(""))  {
+                        try {
+                            Integer.parseInt(response[i]);
+                            response[i]=Operators.operatorReplace(response[i]);
+                            //optimize
+                            if(i==0)
+                                response[i+1]=response[i];
+                        }  catch(NumberFormatException E){
+                            // do nothing
+                        }
                     }
-                }
-                else if (response[i].equals("31000")|| response[i].equals("11111") || response[i].equals("123456") || response[i].equals("31099") || (response[i].equals("") && !isGSM)){
-                    response[i]=homeOperator;
+                } else if (response[i].equals("31000")|| response[i].equals("11111") || response[i].equals("123456") || response[i].equals("31099") || (response[i].equals("") && !isGSM)){
+                        response[i]=homeOperator;
                 }
             }
         }
@@ -584,7 +559,11 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
                 if (response[i]== null){
                     response[i]=Integer.toString(Integer.MAX_VALUE);
                 } else {
-                    response[i]=Integer.toString(Integer.parseInt(response[i],16));
+                    try {
+                        Integer.parseInt(response[i]);
+                    } catch(NumberFormatException e) {
+                        response[i]=Integer.toString(Integer.parseInt(response[i],16));
+                    }
                 }
             }
         }
@@ -614,10 +593,10 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
      */
     private void setWbAmr(int state) {
         if (state == 1) {
-            Rlog.d(LOG_TAG, "setWbAmr(): setting audio parameter - wb_amr=on");
+            Rlog.d(RILJ_LOG_TAG, "setWbAmr(): setting audio parameter - wb_amr=on");
             mAudioManager.setParameters("wide_voice_enable=true");
         }else if (state == 0) {
-            Rlog.d(LOG_TAG, "setWbAmr(): setting audio parameter - wb_amr=on");
+            Rlog.d(RILJ_LOG_TAG, "setWbAmr(): setting audio parameter - wb_amr=on");
             mAudioManager.setParameters("wide_voice_enable=false");
         }
         //prevent race conditions when the two meeets
@@ -672,7 +651,7 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
                     && sir.alertPitch == SignalToneUtil.IS95_CONST_IR_ALERT_MED
                     && sir.signal == SignalToneUtil.IS95_CONST_IR_SIG_IS54B_L) {
 
-                Rlog.d(LOG_TAG, "Dropping \"" + responseToString(response) + " "
+                Rlog.d(RILJ_LOG_TAG, "Dropping \"" + responseToString(response) + " "
                         + retToString(response, sir)
                         + "\" to prevent \"ring of death\" bug.");
                 return;

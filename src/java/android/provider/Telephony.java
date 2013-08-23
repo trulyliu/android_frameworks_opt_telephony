@@ -30,6 +30,7 @@ import android.text.TextUtils;
 import android.telephony.Rlog;
 import android.util.Patterns;
 
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -2005,32 +2006,5 @@ public final class Telephony {
                 CMAS_URGENCY,
                 CMAS_CERTAINTY
         };
-    }    
-
-        /**
-         * Query parameter used to match numbers by regular-expression like
-         * matching. Supported are the '*' and the '.' operators.
-         * <p>
-         * TYPE: boolean
-         */
-        public static final String REGEX_KEY = "regex";
-
-        /**
-         * The default sort order for this table
-         */
-        public static final String DEFAULT_SORT_ORDER = "number ASC";
-
-        /**
-         * The phone number as the user entered it.
-         * <P>Type: TEXT</P>
-         */
-        public static final String NUMBER = "number";
-
-        /**
-         * Whether the number contains a regular expression pattern
-         * <P>Type: BOOLEAN (read only)</P>
-         */
-        public static final String IS_REGEX = "is_regex";
-
-    
+    }
 }
