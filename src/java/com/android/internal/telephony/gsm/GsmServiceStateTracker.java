@@ -383,7 +383,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
 
                 // The radio is telling us about signal strength changes
                 // we don't have to ask it
-                dontPollSignalStrength = true;
+                // dontPollSignalStrength = true;	// FIXME: trulyliu@gmail.com
 
                 onSignalStrengthResult(ar, true);
                 break;

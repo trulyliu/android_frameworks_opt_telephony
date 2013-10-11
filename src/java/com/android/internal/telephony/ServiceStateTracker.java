@@ -517,7 +517,7 @@ public abstract class ServiceStateTracker extends Handler {
         // This signal is used for both voice and data radio signal so parse
         // all fields
 
-        if ((ar.exception == null) && (ar.result != null)) {
+        if ((ar.result != null)) { //FIXME: trulyliu@gmail.com
             mSignalStrength = (SignalStrength) ar.result;
             mSignalStrength.validateInput();
             mSignalStrength.setGsm(isGsm);
