@@ -29,6 +29,7 @@ import static android.telephony.TelephonyManager.NETWORK_TYPE_HSUPA;
 import static android.telephony.TelephonyManager.NETWORK_TYPE_HSPA;
 import static android.telephony.TelephonyManager.NETWORK_TYPE_HSPAP;
 import static android.telephony.TelephonyManager.NETWORK_TYPE_DCHSPAP;
+import static android.telephony.TelephonyManager.NETWORK_TYPE_TD_SCDMA;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -3832,6 +3833,8 @@ public class RIL extends BaseCommands implements CommandsInterface {
            radioType = NETWORK_TYPE_HSPAP;
        } else if (radioString.equals("DCHSPAP")) {
            radioType = NETWORK_TYPE_DCHSPAP;
+       } else if (radioString.equals("TDSCDMA") || radioString.equals("TD_SCDMA") || radioString.equals("TD-SCDMA")) {
+           radioType = NETWORK_TYPE_TD_SCDMA;
        } else {
            radioType = NETWORK_TYPE_UNKNOWN;
        }
