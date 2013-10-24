@@ -71,6 +71,7 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
     private boolean oldRilState = needsOldRilFeature("exynos4RadioState");
     private boolean googleEditionSS = needsOldRilFeature("googleEditionSS");
     private boolean driverCall = needsOldRilFeature("newDriverCall");
+    private boolean hasTdScdmaSignalStrength = needsOldRilFeature("TdScdmaSignalStrength");
     private String[] lastKnownOfGood = {null, null, null};
     public SamsungQualcommRIL(Context context, int networkMode,
             int cdmaSubscription) {
@@ -186,7 +187,7 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
 
     @Override
     protected Object responseSignalStrength(Parcel p) {
-        int numInts = 12;
+        int numInts = hasTdScdmaSignalStrength ? 13 : 12;
         int response[];
 
         // This is a mashup of algorithms used in
@@ -219,8 +220,8 @@ public class SamsungQualcommRIL extends RIL implements CommandsInterface {
         }else{ // lte is gsm on samsung/qualcomm cdma stack
             response[7] &= 0xff;
         }
-        return new SignalStrength(response[0], response[1], response[2], response[3], response[4], response[5], response[6], response[7], response[8], response[9], response[10], response[11], (p.readInt() != 0));
-
+        return hasTdScdmaSignalStrength ? new SignalStrength(response[0], response[1], response[2], response[3], response[4], response[5], response[6], response[7], response[8], response[9], response[10], response[11], response[12], (p.readInt() != 0)) :
+            new SignalStrength(response[0], response[1], response[2], response[3], response[4], response[5], response[6], response[7], response[8], response[9], response[10], response[11], (p.readInt() != 0));
     }
 
     @Override
