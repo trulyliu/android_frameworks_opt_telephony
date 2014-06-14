@@ -87,6 +87,7 @@ import java.util.TimeZone;
 public class GsmServiceStateTracker extends ServiceStateTracker {
     static final String LOG_TAG = "GsmSST";
     static final boolean VDBG = false;
+    static final String TDSCDMA_RADIO_PROPERTY = "persist.radio.tdscdma_present";
 
     protected GSMPhone mPhone;
     GsmCellLocation mCellLoc;
@@ -1041,6 +1042,14 @@ public class GsmServiceStateTracker extends ServiceStateTracker {
                 mGotCountryCode = true;
 
                 TimeZone zone = null;
+
+                String oldTdscdmaRadioProperty = getSystemProperty(TDSCDMA_RADIO_PROPERTY, "");
+                boolean isChinaMobileNetwork = (operatorNumeric.equals("46000") || operatorNumeric.equals("46002"));
+                if (!oldTdscdmaRadioProperty.equals("2") && isChinaMobileNetwork) {
+                    mPhone.setSystemProperty(TDSCDMA_RADIO_PROPERTY, "2");
+                } else if (!isChinaMobileNetwork && !TextUtils.isEmpty(oldTdscdmaRadioProperty)) {
+                    mPhone.setSystemProperty(TDSCDMA_RADIO_PROPERTY, "");
+                }
 
                 if (!mNitzUpdatedTime && !mcc.equals("000") && !TextUtils.isEmpty(iso) &&
                         getAutoTimeZone()) {
